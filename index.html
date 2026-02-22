@@ -224,6 +224,22 @@
     border-radius: 12px; font-size: 0.72rem; color: var(--text-dim); line-height: 1.6;
   }
   .disclaimer strong { color: var(--text-muted); }
+
+  .footer {
+    margin-top: 1.5rem; text-align: center; padding: 1.25rem 0 0;
+    border-top: 1px solid var(--surface-2);
+  }
+  .footer-links { display: flex; justify-content: center; gap: 1.25rem; flex-wrap: wrap; }
+  .footer-link {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    color: var(--text-dim); text-decoration: none; font-size: 0.78rem;
+    font-weight: 500; padding: 0.4rem 0.75rem; border-radius: 8px;
+    border: 1px solid var(--surface-3); background: var(--surface-2);
+    transition: all .2s;
+  }
+  .footer-link:hover { border-color: var(--amber); color: var(--amber); }
+  .footer-link svg { width: 16px; height: 16px; fill: currentColor; }
+  .footer-credit { margin-top: 0.75rem; font-size: 0.65rem; color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -324,6 +340,20 @@
   </div>
 
   <div class="disclaimer" id="disclaimer"></div>
+
+  <div class="footer">
+    <div class="footer-links">
+      <a class="footer-link" href="https://github.com/delastone1-gif/BAC-sober-drive-check-eu" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span data-i18n="footerRepo">Source code</span>
+      </a>
+      <a class="footer-link" href="https://github.com/delastone1-gif" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span data-i18n="footerProfile">My GitHub</span>
+      </a>
+    </div>
+    <div class="footer-credit" id="footerCredit">Made with 🍷 in Copenhagen</div>
+  </div>
 </div>
 
 <script>
@@ -354,6 +384,7 @@ const T = {
     noviceTag: "novice",
     disclaimer: '<strong>⚠ Avertissement :</strong> Ce calculateur fournit une estimation basée sur la formule de Widmark. Les résultats réels varient selon le métabolisme, la santé, les médicaments, la fatigue et de nombreux autres facteurs. Ne prenez jamais le volant si vous avez le moindre doute. En cas de doute, utilisez un éthylotest certifié NF.<br><br><strong>Sources :</strong> Limites légales : European Transport Safety Council (ETSC), OMS (2025).',
     beer: "Bière", wine: "Vin", champagne: "Champagne", spirit: "Spiritueux",
+    footerRepo: "Code source", footerProfile: "Mon GitHub",
     note_dk: "Standard : 0.50 g/L. Novice (3 premières années) : 0.20 g/L",
     note_se: "Limite unique 0.20 g/L pour tous. Aggravé au-dessus de 1.0 g/L",
     note_fr: "Standard : 0.50 g/L. Permis probatoire (3 ans) : 0.20 g/L",
@@ -390,6 +421,7 @@ const T = {
     noviceTag: "novice",
     disclaimer: '<strong>⚠ Disclaimer:</strong> This calculator provides an estimate based on the Widmark formula. Actual results vary based on metabolism, health, medications, fatigue, and many other factors. Never drive if in doubt. Use a certified breathalyzer.<br><br><strong>Sources:</strong> Legal limits from the European Transport Safety Council (ETSC) and WHO (2025).',
     beer: "Beer", wine: "Wine", champagne: "Champagne", spirit: "Spirit",
+    footerRepo: "Source code", footerProfile: "My GitHub",
     note_dk: "Standard: 0.50 g/L. Novice (first 3 years): 0.20 g/L",
     note_se: "Single limit 0.20 g/L for all drivers. Aggravated above 1.0 g/L",
     note_fr: "Standard: 0.50 g/L. Probationary license (3 years): 0.20 g/L",
@@ -420,6 +452,7 @@ function setLang(l) {
   document.getElementById('restTitle').textContent = t('restTitle');
   document.getElementById('soberLabel').textContent = t('soberLabel');
   document.getElementById('disclaimer').innerHTML = t('disclaimer');
+  document.getElementById('footerCredit').textContent = lang==='fr' ? 'Fait avec 🍷 à Copenhague' : 'Made with 🍷 in Copenhagen';
   renderDrinks();
   calculate();
 }
