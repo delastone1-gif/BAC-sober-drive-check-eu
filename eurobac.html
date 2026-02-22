@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EuroBAC - Blood Alcohol Calculator for Europe</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0a09;
+    --surface: #1c1917;
+    --surface-2: #292524;
+    --surface-3: #44403c;
+    --text: #fafaf9;
+    --text-muted: #a8a29e;
+    --text-dim: #78716c;
+    --amber: #f59e0b;
+    --amber-light: #fbbf24;
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,0.12);
+    --green: #22c55e;
+    --green-soft: rgba(34,197,94,0.12);
+    --orange: #f97316;
+    --orange-soft: rgba(249,115,22,0.12);
+    --blue: #3b82f6;
+    --blue-soft: rgba(59,130,246,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .noise {
+    position: fixed; inset: 0; opacity: 0.025; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .container { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 5rem; position: relative; z-index: 1; }
+  .lang-bar { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+  .lang-btn {
+    padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid var(--surface-3);
+    background: var(--surface-2); color: var(--text-dim); font-size: 0.75rem;
+    font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all .2s; margin-left: 0.35rem;
+  }
+  .lang-btn:hover { border-color: var(--text-dim); color: var(--text-muted); }
+  .lang-btn.active { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,0.1); }
+
+  header { text-align: center; margin-bottom: 2.5rem; }
+  header .icon { font-size: 2.2rem; margin-bottom: 0.5rem; display: block; opacity:0; animation: fadeD .5s ease forwards; }
+  header h1 {
+    font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 0.4rem;
+    opacity:0; animation: fadeD .5s ease .1s forwards;
+  }
+  header h1 span {
+    background: linear-gradient(135deg, var(--amber), #fbbf24, #f97316);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  header p { color: var(--text-muted); font-size: 0.9rem; opacity:0; animation: fadeD .5s ease .2s forwards; }
+  @keyframes fadeD { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeU { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--surface-2);
+    border-radius: 16px; padding: 1.5rem; opacity:0; animation: fadeU .5s ease forwards;
+  }
+  .card-label {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-dim); margin-bottom: 1rem; font-weight: 600;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .input-group { margin-bottom: 1.1rem; }
+  .input-group:last-child { margin-bottom: 0; }
+  .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 500; }
+  input[type="number"], select {
+    background: var(--surface-2); border: 1px solid var(--surface-3);
+    border-radius: 10px; color: var(--text); padding: 0.6rem 0.8rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+    width: 100%; outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  input[type="number"]:focus, select:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
+  select {
+    cursor: pointer; -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2378716c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 2rem;
+  }
+  .toggle-row { display: flex; gap: 0.5rem; }
+  .toggle-btn {
+    flex: 1; padding: 0.55rem; border: 1px solid var(--surface-3);
+    background: var(--surface-2); color: var(--text-muted); border-radius: 10px;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    font-weight: 500; transition: all .2s; text-align: center;
+  }
+  .toggle-btn:hover { border-color: var(--text-dim); }
+  .toggle-btn.active { background: rgba(245,158,11,0.15); border-color: var(--amber); color: var(--amber); }
+
+  .novice-toggle { display: flex; align-items: center; gap: 0.65rem; cursor: pointer; user-select: none; }
+  .novice-switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+  .novice-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+  .novice-slider {
+    position: absolute; inset: 0; background: var(--surface-3);
+    border-radius: 12px; transition: background .2s;
+  }
+  .novice-slider::before {
+    content: ''; position: absolute; left: 3px; top: 3px;
+    width: 18px; height: 18px; background: var(--text-dim);
+    border-radius: 50%; transition: all .2s;
+  }
+  .novice-switch input:checked + .novice-slider { background: var(--amber); }
+  .novice-switch input:checked + .novice-slider::before { transform: translateX(18px); background: var(--bg); }
+  .novice-text { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; }
+  .novice-hint { font-size: 0.68rem; color: var(--text-dim); margin-top: 0.2rem; line-height: 1.35; }
+  .novice-active-badge {
+    display: inline-block; font-size: 0.6rem; font-weight: 700;
+    background: var(--blue-soft); color: var(--blue); padding: 0.12rem 0.45rem;
+    border-radius: 10px; margin-left: 0.4rem; vertical-align: middle; letter-spacing: 0.04em;
+  }
+  .limit-lowered {
+    font-size: 0.58rem; color: var(--blue); background: var(--blue-soft);
+    padding: 0.08rem 0.35rem; border-radius: 6px; margin-left: 0.25rem; font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+
+  .drinks-section { margin-bottom: 1.5rem; opacity:0; animation: fadeU .5s ease .3s forwards; }
+  .drinks-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+  @media (max-width: 640px) { .drinks-grid { grid-template-columns: repeat(2, 1fr); } }
+  .drink-card {
+    background: var(--surface); border: 1px solid var(--surface-2);
+    border-radius: 14px; padding: 1rem 0.75rem; text-align: center; transition: all .2s;
+  }
+  .drink-card:hover { border-color: var(--surface-3); }
+  .drink-icon { font-size: 1.8rem; margin-bottom: 0.4rem; display: block; }
+  .drink-name { font-size: 0.78rem; font-weight: 600; margin-bottom: 0.15rem; }
+  .drink-detail { font-size: 0.65rem; color: var(--text-dim); margin-bottom: 0.75rem; }
+  .qty-control { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+  .qty-btn {
+    width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--surface-3);
+    background: var(--surface-2); color: var(--text-muted); font-size: 1.1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .15s; font-family: 'DM Sans', sans-serif; line-height: 1;
+  }
+  .qty-btn:hover { border-color: var(--amber); color: var(--amber); }
+  .qty-btn:active { transform: scale(0.92); }
+  .qty-value { font-size: 1.15rem; font-weight: 700; min-width: 28px; text-align: center; font-family: 'Fraunces', serif; }
+
+  .results-section { opacity:0; animation: fadeU .5s ease .4s forwards; }
+  .bac-display {
+    text-align: center; padding: 1.5rem 1rem; margin-bottom: 1.5rem;
+    background: var(--surface-2); border-radius: 14px; border: 1px solid var(--surface-3);
+  }
+  .bac-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 0.3rem; }
+  .bac-value {
+    font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.5rem; line-height: 1; letter-spacing: -0.02em; transition: color .3s;
+  }
+  .bac-unit { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem; }
+  .bac-value.safe { color: var(--green); }
+  .bac-value.warning { color: var(--orange); }
+  .bac-value.danger { color: var(--red); }
+
+  .progress-wrap { margin-top: 1.25rem; margin-bottom: 0.5rem; }
+  .progress-labels { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
+  .progress-labels span { font-size: 0.65rem; color: var(--text-dim); }
+  .progress-bar { height: 10px; background: var(--surface-3); border-radius: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 6px; transition: width .6s ease, background .3s; min-width: 2px; }
+  .progress-fill.low { background: linear-gradient(90deg, #22c55e, #4ade80); }
+  .progress-fill.mid { background: linear-gradient(90deg, #22c55e, #f59e0b); }
+  .progress-fill.high { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+  .progress-fill.extreme { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+  .breakdown {
+    margin-top: 1rem; padding: 0.85rem 1rem;
+    background: var(--surface-2); border-radius: 10px; font-size: 0.72rem; color: var(--text-dim);
+  }
+  .breakdown-title { font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .breakdown-row { display: flex; justify-content: space-between; padding: 0.2rem 0; }
+  .breakdown-row span:last-child { color: var(--text-muted); font-weight: 500; }
+
+  .country-results { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .country-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface-2); border-radius: 12px; padding: 0.8rem 1rem;
+    border: 1px solid transparent; transition: border-color .2s;
+  }
+  .country-left { display: flex; align-items: center; gap: 0.7rem; }
+  .country-flag { font-size: 1.35rem; }
+  .country-name { font-weight: 600; font-size: 0.85rem; }
+  .country-limit { font-size: 0.7rem; color: var(--text-dim); }
+  .country-right { text-align: right; }
+  .country-status {
+    font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem;
+    border-radius: 20px; display: inline-block;
+  }
+  .status-ok { background: var(--green-soft); color: var(--green); }
+  .status-warn { background: var(--orange-soft); color: var(--orange); }
+  .status-over { background: var(--red-soft); color: var(--red); }
+  .country-wait { font-size: 0.68rem; color: var(--text-dim); margin-top: 0.15rem; }
+
+  .timeline-section { margin-top: 1.5rem; }
+  .timeline-title { font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.05rem; margin-bottom: 1rem; }
+  .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 0.75rem; }
+  @media (max-width: 640px) { .detail-grid { grid-template-columns: 1fr; } }
+  .detail-card { background: var(--surface-2); border-radius: 12px; padding: 1rem; border: 1px solid var(--surface-3); }
+  .detail-country { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.65rem; flex-wrap: wrap; }
+  .detail-flag { font-size: 1.2rem; }
+  .detail-name { font-weight: 700; font-size: 0.85rem; }
+  .detail-row { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
+  .detail-key { font-size: 0.7rem; color: var(--text-dim); }
+  .detail-val { font-size: 0.7rem; font-weight: 600; }
+
+  .sober-time-display {
+    text-align: center; padding: 1.25rem;
+    background: var(--surface-2); border-radius: 14px;
+    border: 1px solid var(--surface-3); margin-top: 1.25rem;
+  }
+  .sober-time-value { font-family: 'Fraunces', serif; font-weight: 900; font-size: 2rem; color: var(--amber-light); }
+  .sober-time-label { font-size: 0.73rem; color: var(--text-dim); margin-top: 0.1rem; }
+  .sober-time-clock { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.45rem; }
+  .sober-time-clock strong { color: var(--text); }
+
+  .disclaimer {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.15);
+    border-radius: 12px; font-size: 0.72rem; color: var(--text-dim); line-height: 1.6;
+  }
+  .disclaimer strong { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <div class="lang-bar">
+    <button class="lang-btn active" onclick="setLang('fr')" id="langFr">🇫🇷 FR</button>
+    <button class="lang-btn" onclick="setLang('en')" id="langEn">🇬🇧 EN</button>
+  </div>
+
+  <header>
+    <span class="icon">🍷</span>
+    <h1 id="title">Calculateur <span>d'Alcoolémie</span></h1>
+    <p id="subtitle">Estimez votre taux et le temps d'attente par pays européen</p>
+  </header>
+
+  <div class="grid-2">
+    <div class="card" style="animation-delay:.15s">
+      <div class="card-label" data-i18n="profile">Profil</div>
+      <div class="input-group">
+        <label data-i18n="sex">Sexe</label>
+        <div class="toggle-row">
+          <button class="toggle-btn active" data-gender="male" onclick="setGender('male')" id="btnMale">♂ Homme</button>
+          <button class="toggle-btn" data-gender="female" onclick="setGender('female')" id="btnFemale">♀ Femme</button>
+        </div>
+      </div>
+      <div class="input-group">
+        <label data-i18n="weight">Poids (kg)</label>
+        <input type="number" id="weight" value="80" min="30" max="250" oninput="calculate()">
+      </div>
+      <div class="input-group">
+        <label class="novice-toggle" for="noviceCheck">
+          <div class="novice-switch">
+            <input type="checkbox" id="noviceCheck" onchange="calculate()">
+            <span class="novice-slider"></span>
+          </div>
+          <div>
+            <div class="novice-text" data-i18n="noviceLabel">Jeune conducteur / permis probatoire</div>
+            <div class="novice-hint" data-i18n="noviceHint">Limites réduites (ex : 0.20 g/L en France, 0.00 g/L en Allemagne)</div>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="card" style="animation-delay:.25s">
+      <div class="card-label" data-i18n="timing">Temporalité</div>
+      <div class="input-group">
+        <label data-i18n="stomach">Estomac</label>
+        <select id="stomach" onchange="calculate()">
+          <option value="empty" id="optEmpty">Vide (pas mangé)</option>
+          <option value="full" selected id="optFull">Plein (après un repas)</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label data-i18n="timeSince">Temps depuis le 1er verre (heures)</label>
+        <input type="number" id="hours" value="1" min="0" max="24" step="0.5" oninput="calculate()">
+      </div>
+    </div>
+  </div>
+
+  <div class="drinks-section">
+    <div class="card-label" data-i18n="drinks">Consommations</div>
+    <div class="drinks-grid" id="drinksGrid"></div>
+  </div>
+
+  <div class="results-section">
+    <div class="card" style="animation-delay:.4s; padding: 1.75rem;">
+      <div class="card-label" data-i18n="results">Résultats estimés</div>
+      <div class="bac-display">
+        <div class="bac-label" data-i18n="bacLabel">Taux d'alcoolémie estimé</div>
+        <div class="bac-value safe" id="bacValue">0.00</div>
+        <div class="bac-unit">g/L</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-labels"><span>0 g/L</span><span>0.50</span><span>0.80</span><span>1.50+</span></div>
+        <div class="progress-bar"><div class="progress-fill low" id="progressFill" style="width:0%"></div></div>
+      </div>
+      <div id="breakdownDiv"></div>
+
+      <div style="margin-top:1.5rem">
+        <div class="card-label">
+          <span data-i18n="statusByCountry">Statut par pays</span>
+          <span class="novice-active-badge" id="noviceBadge" style="display:none">NOVICE</span>
+        </div>
+      </div>
+      <div class="country-results" id="countryResults"></div>
+
+      <div class="timeline-section">
+        <div class="timeline-title" id="restTitle">⏱ Temps de repos estimé</div>
+        <div class="detail-grid" id="detailGrid"></div>
+        <div class="sober-time-display">
+          <div class="sober-time-label" id="soberLabel">Retour à 0.00 g/L dans environ</div>
+          <div class="sober-time-value" id="soberTime">0h00</div>
+          <div class="sober-time-clock" id="soberClock"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer" id="disclaimer"></div>
+</div>
+
+<script>
+const T = {
+  fr: {
+    title: "Calculateur <span>d'Alcoolémie</span>",
+    subtitle: "Estimez votre taux et le temps d'attente par pays européen",
+    profile: "Profil", sex: "Sexe", weight: "Poids (kg)",
+    male: "♂ Homme", female: "♀ Femme",
+    noviceLabel: "Jeune conducteur / permis probatoire",
+    noviceHint: "Limites réduites (ex : 0.20 g/L en France, 0.00 g/L en Allemagne)",
+    timing: "Temporalité", stomach: "Estomac",
+    stomachEmpty: "Vide (pas mangé)", stomachFull: "Plein (après un repas)",
+    timeSince: "Temps depuis le 1er verre (heures)",
+    drinks: "Consommations", results: "Résultats estimés",
+    bacLabel: "Taux d'alcoolémie estimé",
+    statusByCountry: "Statut par pays",
+    restTitle: "⏱ Temps de repos estimé",
+    soberLabel: "Retour à 0.00 g/L dans environ",
+    soberAt: "Sobre vers", youAreSober: "Vous êtes sobre",
+    ok: "✓ OK", legal: "✓ Légal", borderline: "⚠ Limite", forbidden: "✗ Interdit",
+    wait: "Attendre ~", limit: "Limite",
+    yourBac: "Votre taux actuel", waitTime: "Temps d'attente",
+    driveFrom: "Conduire à partir de", now: "Maintenant", none: "Aucun",
+    legalLimit: "Limite légale", noviceLimitLabel: "Limite novice",
+    breakdownTitle: "Détail des consommations",
+    totalPure: "Total alcool pur", pureAlcohol: "d'alcool pur",
+    noviceTag: "novice",
+    disclaimer: '<strong>⚠ Avertissement :</strong> Ce calculateur fournit une estimation basée sur la formule de Widmark. Les résultats réels varient selon le métabolisme, la santé, les médicaments, la fatigue et de nombreux autres facteurs. Ne prenez jamais le volant si vous avez le moindre doute. En cas de doute, utilisez un éthylotest certifié NF.<br><br><strong>Sources :</strong> Limites légales : European Transport Safety Council (ETSC), OMS (2025).',
+    beer: "Bière", wine: "Vin", champagne: "Champagne", spirit: "Spiritueux",
+    note_dk: "Standard : 0.50 g/L. Novice (3 premières années) : 0.20 g/L",
+    note_se: "Limite unique 0.20 g/L pour tous. Aggravé au-dessus de 1.0 g/L",
+    note_fr: "Standard : 0.50 g/L. Permis probatoire (3 ans) : 0.20 g/L",
+    note_no: "Limite unique 0.20 g/L pour tous. Sanctions progressives",
+    note_de: "Standard : 0.50 g/L. Novice (2 ans) et <21 ans : 0.00 g/L strict",
+    note_uk: "Standard : 0.80 g/L. Écosse : 0.50 g/L. Pas de limite novice",
+    days: ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'],
+    daysShort: ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'],
+    locale: 'fr-FR',
+  },
+  en: {
+    title: "Blood Alcohol <span>Calculator</span>",
+    subtitle: "Estimate your BAC and wait time per European country",
+    profile: "Profile", sex: "Sex", weight: "Weight (kg)",
+    male: "♂ Male", female: "♀ Female",
+    noviceLabel: "Novice / probationary driver",
+    noviceHint: "Stricter limits in most countries (e.g. 0.20 g/L in France, 0.00 g/L in Germany)",
+    timing: "Timing", stomach: "Stomach",
+    stomachEmpty: "Empty (haven't eaten)", stomachFull: "Full (after a meal)",
+    timeSince: "Time since first drink (hours)",
+    drinks: "Drinks", results: "Estimated results",
+    bacLabel: "Estimated blood alcohol level",
+    statusByCountry: "Status by country",
+    restTitle: "⏱ Estimated rest time",
+    soberLabel: "Back to 0.00 g/L in approx.",
+    soberAt: "Sober around", youAreSober: "You are sober",
+    ok: "✓ OK", legal: "✓ Legal", borderline: "⚠ Close", forbidden: "✗ Over limit",
+    wait: "Wait ~", limit: "Limit",
+    yourBac: "Your current BAC", waitTime: "Wait time",
+    driveFrom: "Safe to drive from", now: "Now", none: "None",
+    legalLimit: "Legal limit", noviceLimitLabel: "Novice limit",
+    breakdownTitle: "Drink breakdown",
+    totalPure: "Total pure alcohol", pureAlcohol: "pure alcohol",
+    noviceTag: "novice",
+    disclaimer: '<strong>⚠ Disclaimer:</strong> This calculator provides an estimate based on the Widmark formula. Actual results vary based on metabolism, health, medications, fatigue, and many other factors. Never drive if in doubt. Use a certified breathalyzer.<br><br><strong>Sources:</strong> Legal limits from the European Transport Safety Council (ETSC) and WHO (2025).',
+    beer: "Beer", wine: "Wine", champagne: "Champagne", spirit: "Spirit",
+    note_dk: "Standard: 0.50 g/L. Novice (first 3 years): 0.20 g/L",
+    note_se: "Single limit 0.20 g/L for all drivers. Aggravated above 1.0 g/L",
+    note_fr: "Standard: 0.50 g/L. Probationary license (3 years): 0.20 g/L",
+    note_no: "Single limit 0.20 g/L for all drivers. Progressive penalties",
+    note_de: "Standard: 0.50 g/L. Novice (2 years) and under 21: 0.00 g/L strict",
+    note_uk: "Standard: 0.80 g/L. Scotland: 0.50 g/L. No specific novice limit",
+    days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+    daysShort: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+    locale: 'en-GB',
+  }
+};
+
+let lang = 'fr';
+function t(k) { return T[lang][k] || T['fr'][k] || k; }
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('langFr').classList.toggle('active', l==='fr');
+  document.getElementById('langEn').classList.toggle('active', l==='en');
+  document.documentElement.lang = l;
+  document.getElementById('title').innerHTML = t('title');
+  document.getElementById('subtitle').textContent = t('subtitle');
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.getElementById('btnMale').textContent = t('male');
+  document.getElementById('btnFemale').textContent = t('female');
+  document.getElementById('optEmpty').textContent = t('stomachEmpty');
+  document.getElementById('optFull').textContent = t('stomachFull');
+  document.getElementById('restTitle').textContent = t('restTitle');
+  document.getElementById('soberLabel').textContent = t('soberLabel');
+  document.getElementById('disclaimer').innerHTML = t('disclaimer');
+  renderDrinks();
+  calculate();
+}
+
+const DRINKS = [
+  { id:'beer',      icon:'🍺', nameKey:'beer',      detail:'33cl / 5%',    ml:330, abv:0.05 },
+  { id:'wine',      icon:'🍷', nameKey:'wine',      detail:'15cl / 13%',   ml:150, abv:0.13 },
+  { id:'champagne', icon:'🥂', nameKey:'champagne', detail:'12.5cl / 12%', ml:125, abv:0.12 },
+  { id:'spirit',    icon:'🥃', nameKey:'spirit',    detail:'4cl / 40%',    ml:40,  abv:0.40 },
+];
+
+const COUNTRIES = [
+  { id:'dk', flag:'🇩🇰', name:'Danemark',    nameEn:'Denmark',        limit:0.50, noviceLimit:0.20, noteKey:'note_dk' },
+  { id:'se', flag:'🇸🇪', name:'Suède',       nameEn:'Sweden',         limit:0.20, noviceLimit:0.20, noteKey:'note_se' },
+  { id:'fr', flag:'🇫🇷', name:'France',      nameEn:'France',         limit:0.50, noviceLimit:0.20, noteKey:'note_fr' },
+  { id:'no', flag:'🇳🇴', name:'Norvège',     nameEn:'Norway',         limit:0.20, noviceLimit:0.20, noteKey:'note_no' },
+  { id:'de', flag:'🇩🇪', name:'Allemagne',   nameEn:'Germany',        limit:0.50, noviceLimit:0.00, noteKey:'note_de' },
+  { id:'uk', flag:'🇬🇧', name:'Royaume-Uni', nameEn:'United Kingdom', limit:0.80, noviceLimit:0.80, noteKey:'note_uk' },
+];
+
+const ELIM = 0.15;
+let gender = 'male';
+let quantities = {};
+DRINKS.forEach(d => quantities[d.id] = 0);
+
+function cName(c) { return lang==='en' ? c.nameEn : c.name; }
+function isNovice() { return document.getElementById('noviceCheck').checked; }
+function getLimit(c) { return isNovice() ? c.noviceLimit : c.limit; }
+
+function setGender(g) {
+  gender = g;
+  document.querySelectorAll('.toggle-btn[data-gender]').forEach(b => b.classList.toggle('active', b.dataset.gender===g));
+  calculate();
+}
+function setQty(id, d) {
+  quantities[id] = Math.max(0, (quantities[id]||0)+d);
+  document.getElementById('qty-'+id).textContent = quantities[id];
+  calculate();
+}
+function renderDrinks() {
+  document.getElementById('drinksGrid').innerHTML = DRINKS.map(d => `
+    <div class="drink-card">
+      <span class="drink-icon">${d.icon}</span>
+      <div class="drink-name">${t(d.nameKey)}</div>
+      <div class="drink-detail">${d.detail}</div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="setQty('${d.id}',-1)">&minus;</button>
+        <span class="qty-value" id="qty-${d.id}">${quantities[d.id]}</span>
+        <button class="qty-btn" onclick="setQty('${d.id}',1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function waitHours(bacR, lim) {
+  if (bacR <= lim) return 0;
+  return lim === 0 ? bacR / ELIM : (bacR - lim) / ELIM;
+}
+
+function calculate() {
+  const weight = parseFloat(document.getElementById('weight').value)||80;
+  const hours = parseFloat(document.getElementById('hours').value)||0;
+  const stomach = document.getElementById('stomach').value;
+  const novice = isNovice();
+  const r = gender==='male' ? 0.68 : 0.55;
+  const absorb = stomach==='empty' ? 1.0 : 0.8;
+
+  document.getElementById('noviceBadge').style.display = novice ? 'inline-block' : 'none';
+
+  let totalG = 0;
+  const bd = [];
+  DRINKS.forEach(d => {
+    const q = quantities[d.id]||0;
+    if (q > 0) { const g = q*d.ml*d.abv*0.789; totalG += g; bd.push({name:t(d.nameKey),icon:d.icon,qty:q,g}); }
+  });
+
+  let bac = (totalG * absorb) / (weight * r) - (ELIM * hours);
+  bac = Math.max(0, bac);
+  const bacR = Math.round(bac*100)/100;
+
+  const bacEl = document.getElementById('bacValue');
+  bacEl.textContent = bacR.toFixed(2);
+  bacEl.className = 'bac-value '+(bacR<=0.20?'safe':bacR<=0.50?'warning':'danger');
+
+  const pct = Math.min(100,(bacR/1.5)*100);
+  const pF = document.getElementById('progressFill');
+  pF.style.width = pct+'%';
+  pF.className = 'progress-fill '+(bacR<=0.20?'low':bacR<=0.50?'mid':bacR<=0.80?'high':'extreme');
+
+  // Breakdown
+  const bdDiv = document.getElementById('breakdownDiv');
+  if (bd.length) {
+    bdDiv.innerHTML = `<div class="breakdown">
+      <div class="breakdown-title">${t('breakdownTitle')}</div>
+      ${bd.map(d=>`<div class="breakdown-row"><span>${d.icon} ${d.qty}x ${d.name}</span><span>${d.g.toFixed(1)}g ${t('pureAlcohol')}</span></div>`).join('')}
+      <div class="breakdown-row" style="border-top:1px solid var(--surface-3);padding-top:0.35rem;margin-top:0.25rem;">
+        <span style="font-weight:600;color:var(--text-muted);">${t('totalPure')}</span>
+        <span style="font-weight:700;color:var(--amber);">${(totalG*absorb).toFixed(1)}g</span>
+      </div></div>`;
+  } else bdDiv.innerHTML='';
+
+  // Country rows
+  document.getElementById('countryResults').innerHTML = COUNTRIES.map(c => {
+    const lim = getLimit(c);
+    const changed = novice && c.noviceLimit !== c.limit;
+    const over = bacR > lim;
+    const close = !over && lim > 0 && bacR > lim*0.8 && bacR > 0;
+    let sc, st;
+    if (bacR===0) { sc='status-ok'; st=t('ok'); }
+    else if (over) { sc='status-over'; st=t('forbidden'); }
+    else if (close) { sc='status-warn'; st=t('borderline'); }
+    else { sc='status-ok'; st=t('legal'); }
+    const w = waitHours(bacR, lim);
+    const ws = w>0 ? t('wait')+formatTime(w) : '';
+    const badge = changed ? ` <span class="limit-lowered">${t('noviceTag')}</span>` : '';
+
+    return `<div class="country-row" style="border-color:${over?'rgba(239,68,68,0.2)':close?'rgba(249,115,22,0.15)':'transparent'}">
+      <div class="country-left">
+        <span class="country-flag">${c.flag}</span>
+        <div><div class="country-name">${cName(c)}</div><div class="country-limit">${t('limit')} : ${lim.toFixed(2)} g/L${badge}</div></div>
+      </div>
+      <div class="country-right">
+        <span class="country-status ${sc}">${st}</span>
+        ${ws?`<div class="country-wait">${ws}</div>`:''}
+      </div></div>`;
+  }).join('');
+
+  // Detail cards
+  const primary = COUNTRIES.filter(c=>['dk','se','fr'].includes(c.id));
+  const now = new Date();
+  const loc = t('locale');
+
+  document.getElementById('detailGrid').innerHTML = primary.map(c => {
+    const lim = getLimit(c);
+    const changed = novice && c.noviceLimit !== c.limit;
+    const over = bacR > lim;
+    const w = waitHours(bacR, lim);
+    const safe = new Date(now.getTime()+w*3600000);
+    const diffD = w>0 && safe.getDate()!==now.getDate();
+    const dp = diffD ? t('daysShort')[safe.getDay()]+' ' : '';
+    const safeStr = w>0 ? dp+safe.toLocaleTimeString(loc,{hour:'2-digit',minute:'2-digit'}) : t('now');
+    const limKey = changed ? t('noviceLimitLabel') : t('legalLimit');
+
+    return `<div class="detail-card">
+      <div class="detail-country"><span class="detail-flag">${c.flag}</span><span class="detail-name">${cName(c)}</span>${changed?`<span class="limit-lowered">${t('noviceTag')}</span>`:''}</div>
+      <div class="detail-row"><span class="detail-key">${limKey}</span><span class="detail-val">${lim.toFixed(2)} g/L</span></div>
+      <div class="detail-row"><span class="detail-key">${t('yourBac')}</span><span class="detail-val" style="color:${over?'var(--red)':'var(--green)'}">${bacR.toFixed(2)} g/L</span></div>
+      <div class="detail-row"><span class="detail-key">${t('waitTime')}</span><span class="detail-val" style="color:${w>0?'var(--orange)':'var(--green)'}">${w>0?formatTime(w):t('none')}</span></div>
+      <div class="detail-row"><span class="detail-key">${t('driveFrom')}</span><span class="detail-val">${safeStr}</span></div>
+      <div style="margin-top:0.45rem;font-size:0.62rem;color:var(--text-dim);line-height:1.4;">${t(c.noteKey)}</div>
+    </div>`;
+  }).join('');
+
+  // Sober
+  const ts = bacR>0 ? bacR/ELIM : 0;
+  document.getElementById('soberTime').textContent = ts>0 ? formatTime(ts) : '0h00';
+  if (ts > 0) {
+    const sa = new Date(now.getTime()+ts*3600000);
+    const dd = sa.getDate()!==now.getDate();
+    const dp = dd ? t('days')[sa.getDay()]+' ' : '';
+    document.getElementById('soberClock').innerHTML =
+      `${t('soberAt')} <strong>${dp}${sa.toLocaleTimeString(loc,{hour:'2-digit',minute:'2-digit'})}</strong>`;
+  } else {
+    document.getElementById('soberClock').innerHTML = t('youAreSober');
+  }
+}
+
+function formatTime(h) {
+  const hrs = Math.floor(h), mins = Math.round((h-hrs)*60);
+  if (hrs===0) return `${mins}min`;
+  if (mins===0) return `${hrs}h`;
+  return `${hrs}h${mins.toString().padStart(2,'0')}`;
+}
+
+setLang('fr');
+</script>
+</body>
+</html>
